@@ -5,6 +5,7 @@ import main.java.Road;
 import main.java.graph.EdgeData;
 import main.java.graph.Graph;
 import main.java.Location;
+import main.java.grid.GridIndex;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +20,7 @@ import java.util.Map;
 public class GraphPanel extends JPanel {
     private Map<String, Point> positions;
     private Graph<String, City, Road> graph;
+    private final GridIndex gridIndex;
     private double scaleX, scaleY;
     private double zoomFactor = 1.0;
     private double zoomMultiplier = 1.1;
@@ -27,9 +29,10 @@ public class GraphPanel extends JPanel {
     private AffineTransform coordTransform = new AffineTransform();
     private ArrayList<String> path;
 
-    public GraphPanel(Graph<String, City, Road> graph, Dimension size) {
+    public GraphPanel( GridIndex gridIndex, Dimension size) {
         this.positions = new HashMap<>();
-        this.graph = graph;
+        this.graph = gridIndex.getGraph();
+        this.gridIndex = gridIndex;
         this.setPreferredSize(size);
         calculateScaleFactors();
         setupMouseWheelZoom();
@@ -133,6 +136,25 @@ public class GraphPanel extends JPanel {
         // Set font size based on zoomFactor
         int fontSize = (int) Math.max(10, 10 * zoomFactor);  // Base size is 10, adjusted with zoom
         g2.setFont(new Font("Arial", Font.PLAIN, fontSize));
+
+        //Draw grid
+        int gridWidth = gridIndex.getWidth();
+        int gridHeight = gridIndex.getHeight();
+        g2.drawLine(0,0,gridWidth,0);
+        g2.drawLine(0,gridHeight,gridWidth,gridHeight);
+        g2.drawLine(0,0,0,gridHeight);
+        g2.drawLine(gridWidth,0,gridWidth,gridHeight);
+
+        int[] horizontal_cuts = gridIndex.getHorizontal_cuts();
+        int[] vertical_cuts = gridIndex.getVertical_cuts();
+
+        for(int i = 0; i < horizontal_cuts.length; i++){
+            g2.drawLine(0,horizontal_cuts[i],gridWidth,horizontal_cuts[i]);
+        }
+
+        for(int i = 0; i < vertical_cuts.length; i++){
+            g2.drawLine(vertical_cuts[i],0,vertical_cuts[i],gridHeight);
+        }
 
         // Draw vertices
         for (City city : graph.getVertices().values()) {

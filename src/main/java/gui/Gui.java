@@ -3,6 +3,7 @@ package main.java.gui;
 import main.java.City;
 import main.java.Road;
 import main.java.graph.Graph;
+import main.java.grid.GridIndex;
 import main.java.gui.components.*;
 
 import javax.swing.*;
@@ -11,7 +12,7 @@ import java.awt.*;
 public class Gui extends JFrame {
     private static final int PANEL_WIDTH = 800;
     private static final int PANEL_HEIGHT = 800;
-    private final Graph<String, City, Road> graph;
+    private final GridIndex gridIndex;
     private GraphPanel graphPanel;
     private JPanel sidebar;
 
@@ -20,9 +21,9 @@ public class Gui extends JFrame {
     private GraphIOForm graphIOForm;
     private DijkstraForm dijkstraForm;
 
-    public Gui(Graph<String, City, Road> graph) {
+    public Gui( GridIndex gridIndex) {
         super("Semestrálí práce B Ondřej Fiala");
-        this.graph = graph;
+        this.gridIndex = gridIndex;
         initWindow();
         initializeComponents();
         setVisible(true);
@@ -42,7 +43,7 @@ public class Gui extends JFrame {
         add(sidebar, BorderLayout.EAST);
 
 
-        graphPanel = new GraphPanel(this.graph, new Dimension((int) Math.round(PANEL_WIDTH * 0.8), (int) Math.round(PANEL_HEIGHT * 0.8)));
+        graphPanel = new GraphPanel(gridIndex, new Dimension((int) Math.round(PANEL_WIDTH * 0.8), (int) Math.round(PANEL_HEIGHT * 0.8)));
         add(graphPanel, BorderLayout.CENTER);
 
         addCityForm();
@@ -53,7 +54,7 @@ public class Gui extends JFrame {
     }
 
     private void addCityForm() {
-        cityForm = new CityForm(this.graph);
+        cityForm = new CityForm(this.gridIndex);
         cityForm.addCityListener(() -> {
             roadForm.mapVerticesToComboBoxes();
             dijkstraForm.mapVerticesToComboBoxes();
@@ -66,7 +67,7 @@ public class Gui extends JFrame {
     }
 
     private void addRoadForm() {
-        roadForm = new RoadForm(this.graph);
+        roadForm = new RoadForm(this.gridIndex);
         roadForm.addRoadListener(() -> {
             dijkstraForm.changesWareMadeInGraph();
             repaint();
@@ -77,7 +78,7 @@ public class Gui extends JFrame {
     }
 
     private void addGraphIOForm() {
-        graphIOForm = new GraphIOForm(this.graph);
+        graphIOForm = new GraphIOForm(this.gridIndex);
         graphIOForm.addLoadListener(() -> {
             roadForm.mapVerticesToComboBoxes();
             roadForm.mapEdgesToComboBoxes();
@@ -91,7 +92,7 @@ public class Gui extends JFrame {
     }
 
     private void addDijkstraForm() {
-        dijkstraForm = new DijkstraForm(graph, graphPanel);
+        dijkstraForm = new DijkstraForm(gridIndex.getGraph(), graphPanel);
         sidebar.add(dijkstraForm);
         sidebar.revalidate();
         sidebar.repaint();

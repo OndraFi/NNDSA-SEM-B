@@ -4,6 +4,7 @@ import main.java.City;
 import main.java.Road;
 import main.java.graph.EdgeData;
 import main.java.graph.Graph;
+import main.java.grid.GridIndex;
 import main.java.gui.ComboBoxItem;
 
 import javax.swing.*;
@@ -17,10 +18,12 @@ public class RoadForm extends JPanel {
     private JTextField weightField;
     private JButton addEdgeButton, removeEdgeButton, blockEdgeButton, unblockEdgeButton;
     private final Graph<String, City, Road> graph;
+    private final GridIndex gridIndex;
     private List<Runnable> roadListeners = new ArrayList<>();
 
-    public RoadForm(Graph<String, City, Road> graph) {
-        this.graph = graph;
+    public RoadForm(GridIndex gridIndex) {
+        this.graph = gridIndex.getGraph();
+        this.gridIndex = gridIndex;
         initializeComponents();
         mapVerticesToComboBoxes();
     }
@@ -90,7 +93,7 @@ public class RoadForm extends JPanel {
             String vertex2Key = edgeData.getVertex2Key();
             City city1 = this.graph.getVertex(vertex1Key);
             City city2 = this.graph.getVertex(vertex2Key);
-            ComboBoxItem item = new ComboBoxItem(vertex1Key + "-" + vertex2Key, city1.getName() + " do " + city2.getName());
+            ComboBoxItem item = new ComboBoxItem(vertex1Key + ";" + vertex2Key, city1.getName() + " do " + city2.getName());
             if (!road.isAccessible()) {
                 blockedEdgesComboBox.addItem(item);
             } else {
@@ -105,7 +108,7 @@ public class RoadForm extends JPanel {
             JOptionPane.showMessageDialog(this, "Please select an edge to block.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        String[] vertices = selectedItem.getKey().split("-");
+        String[] vertices = selectedItem.getKey().split(";");
         String vertex1Key = vertices[0];
         String vertex2Key = vertices[1];
         try {
@@ -125,7 +128,7 @@ public class RoadForm extends JPanel {
             JOptionPane.showMessageDialog(this, "Please select an edge to block.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        String[] vertices = selectedItem.getKey().split("-");
+        String[] vertices = selectedItem.getKey().split(";");
         String vertex1Key = vertices[0];
         String vertex2Key = vertices[1];
         try {
@@ -152,7 +155,7 @@ public class RoadForm extends JPanel {
         try {
             int weight = Integer.parseInt(weightStr);
             if (!vertex1Key.equals(vertex2Key)) {
-                graph.addEdge(vertex1Key, vertex2Key, new Road(weight));
+                this.gridIndex.addRoad(vertex1Key, vertex2Key, new Road(weight));
                 JOptionPane.showMessageDialog(this, "Edge added successfully!");
             } else {
                 JOptionPane.showMessageDialog(this, "Cannot add edge between the same vertex.", "Error", JOptionPane.ERROR_MESSAGE);

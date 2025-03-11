@@ -1,6 +1,7 @@
 package main.java;
 
 import main.java.graph.Graph;
+import main.java.grid.GridIndex;
 import main.java.gui.Gui;
 
 import javax.swing.*;
@@ -14,9 +15,11 @@ import java.util.UUID;
 
 public class App {
     Graph<String, City, Road> graph;
+    GridIndex gridIndex;
 
     public App() {
-        this.graph = new Graph<>();
+        this.gridIndex = new GridIndex(1000, 1000);
+        this.graph = gridIndex.getGraph();
 //        generateGraph(graph);
 //        generateAssigmentGraph();
     }
@@ -26,7 +29,7 @@ public class App {
     }
 
     public void openWindow() {
-        Gui gui = new Gui(this.graph);
+        Gui gui = new Gui(gridIndex);
     }
 
     private void generateAssigmentGraph(){

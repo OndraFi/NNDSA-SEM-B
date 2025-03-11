@@ -2,8 +2,7 @@ package main.java.gui.components;
 
 import main.java.App;
 import main.java.City;
-import main.java.Road;
-import main.java.graph.Graph;
+import main.java.grid.GridIndex;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,11 +11,11 @@ import java.util.ArrayList;
 public class CityForm extends JPanel {
     private JTextField cityNameField, xCoordField, yCoordField;
     private JButton addCityButton;
-    private final Graph<String, City, Road> graph;
+    private final GridIndex gridIndex;
     private java.util.List<Runnable> cityListeners = new ArrayList<>();
 
-    public CityForm(Graph<String, City, Road> graph) {
-        this.graph = graph;
+    public CityForm(GridIndex gridIndex) {
+        this.gridIndex = gridIndex;
         initializeComponents();
     }
 
@@ -60,7 +59,7 @@ public class CityForm extends JPanel {
 
             if (!cityName.isEmpty() && !xCoord.isEmpty() && !yCoord.isEmpty()) {
                 City city = new City(cityName, x, y);
-                graph.addVertex(App.generateKey(), city);
+                gridIndex.addCity(App.generateKey(),city);
                 cityNameField.setText("");
                 xCoordField.setText("");
                 yCoordField.setText("");

@@ -4,6 +4,7 @@ import main.java.City;
 import main.java.GraphIO;
 import main.java.Road;
 import main.java.graph.Graph;
+import main.java.grid.GridIndex;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,15 +14,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class GraphIOForm extends JPanel {
-    private final Graph<String, City, Road> graph;
+    private final GridIndex gridIndex;
     private final GraphIO graphIO;
     private final JButton loadButton;
     private final JButton saveButton;
     private final java.util.List<Runnable> loadListeners = new ArrayList<>();
 
-    public GraphIOForm(Graph<String, City, Road> graph) {
-        this.graph = graph;
-        this.graphIO = new GraphIO(this.graph);
+    public GraphIOForm(GridIndex gridIndex) {
+        this.gridIndex = gridIndex;
+        this.graphIO = new GraphIO(this.gridIndex);
         setLayout(new GridLayout(0, 2));
         loadButton = new JButton("Load Graph");
         saveButton = new JButton("Save Graph");
