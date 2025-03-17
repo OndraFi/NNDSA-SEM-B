@@ -134,39 +134,48 @@ public class GraphPanel extends JPanel {
         g2.setTransform(transform);
 
         // Set font size based on zoomFactor
-        int fontSize = (int) Math.max(10, 10 * zoomFactor);  // Base size is 10, adjusted with zoom
+        int fontSize = (int) Math.max(10, 5 * zoomFactor);  // Base size is 10, adjusted with zoom
         g2.setFont(new Font("Arial", Font.PLAIN, fontSize));
 
         //Draw grid
         int gridWidth = gridIndex.getWidth();
         int gridHeight = gridIndex.getHeight();
-        g2.drawLine(0,0,gridWidth,0);
-        g2.drawLine(0,gridHeight,gridWidth,gridHeight);
-        g2.drawLine(0,0,0,gridHeight);
-        g2.drawLine(gridWidth,0,gridWidth,gridHeight);
 
         int[] horizontal_cuts = gridIndex.getHorizontal_cuts();
         int[] vertical_cuts = gridIndex.getVertical_cuts();
 
+        g2.setFont(new Font("Arial", Font.PLAIN, fontSize/3));
+
+        g2.setColor(Color.red);
         for(int i = 0; i < horizontal_cuts.length; i++){
+            g2.drawString("" + horizontal_cuts[i],gridWidth,horizontal_cuts[i]);
             g2.drawLine(0,horizontal_cuts[i],gridWidth,horizontal_cuts[i]);
         }
-
+        g2.setColor(Color.blue);
         for(int i = 0; i < vertical_cuts.length; i++){
+            g2.drawString("" + vertical_cuts[i],vertical_cuts[i], 0);
             g2.drawLine(vertical_cuts[i],0,vertical_cuts[i],gridHeight);
         }
+        g2.setColor(Color.black);
+        g2.setFont(new Font("Arial", Font.PLAIN, fontSize));
+
+//        {
+        g2.drawLine(0,0,gridWidth,0);
+        g2.drawLine(0,gridHeight,gridWidth,gridHeight);
+        g2.drawLine(0,0,0,gridHeight);
+        g2.drawLine(gridWidth,0,gridWidth,gridHeight);
 
         // Draw vertices
         for (City city : graph.getVertices().values()) {
             Location loc = city.getLocation();
             int x = (int) loc.getX();
             int y = (int) loc.getY();
-            int ovalSize = (int) Math.max(5, 5 * zoomFactor);  // Base size is 5, adjusted with zoom
+            int ovalSize = (int) Math.max(2, 1 * zoomFactor);  // Base size is 5, adjusted with zoom
 
             // Vertex
             g2.fillOval(x - ovalSize / 2, y - ovalSize / 2, ovalSize, ovalSize);
             // Text
-            g2.drawString(city.getName(), x - ovalSize / 2, y - ovalSize / 2 - fontSize / 2);
+            g2.drawString(city.getName(), x - ovalSize / 2, y - ovalSize / 2);
         }
 
         // Draw edges

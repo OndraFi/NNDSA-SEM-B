@@ -74,6 +74,8 @@ public class GraphIOForm extends JPanel {
             graphIO.importFromCSV(path);
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(null, "Error reading CSV file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(null, "Error reading CSV file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

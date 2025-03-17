@@ -12,8 +12,8 @@ public class GridIndex {
     private final int height;
     private final Graph<String, City, Road> graph;
 
-    private int[] horizontal_cuts;
-    private int[] vertical_cuts;
+    private int[] horizontal_cuts; // z leva do prava
+    private int[] vertical_cuts; // z vrchu dolu
 
     private int HORIZONTAL_CUT = 0;
     private int VERTICAL_CUT = 1;
@@ -37,8 +37,8 @@ public class GridIndex {
         this.width = width;
         this.height = height;
         this.graph = new Graph<>();
-        this.horizontal_cuts = new int[]{0, width};
-        this.vertical_cuts = new int[]{0, height};
+        this.horizontal_cuts = new int[]{0, height};
+        this.vertical_cuts = new int[]{0, width};
         this.grid_address = new City[1][1];
     }
 
@@ -62,19 +62,27 @@ public class GridIndex {
         return graph;
     }
 
-    public void addCity(String key, City city) {
-        //TODO přidat kontrolu že na daném city.Location není už jiné city a zároveň že v daném místě není udělaný řez.
+    public void addCity(String key, City city) throws IllegalArgumentException {
         if (isLocationOccupied(city.getLocation())) {
+            System.out.println("Location is ocupaied, throwing exception");
             throw new IllegalArgumentException("Location is already occupied by another city or a cut. City:" + city.toString());
         }
-        graph.addVertex(key, city);
-        if (shouldPerformCut(city))
+
+        if (shouldPerformCut(city)) {
             cut(city);
-//        addCityToGridAddress(city);
-        System.out.println("x: " + Arrays.toString(vertical_cuts));
-        System.out.println("y: "+Arrays.toString(horizontal_cuts));
+        }
+
+        graph.addVertex(key, city);
 
         mapAllCitiesToGridAddress();
+
+        printGrid();
+    }
+
+    private void printGrid() {
+        System.out.println("x: " + Arrays.toString(vertical_cuts));
+        System.out.println("y: " + Arrays.toString(horizontal_cuts));
+
 
         for (int j = 0; j < grid_address[0].length; j++) {
             for (int i = 0; i < grid_address.length; i++) {
@@ -91,18 +99,21 @@ public class GridIndex {
     private boolean isLocationOccupied(Location location) {
         for (City[] row : grid_address) {
             for (City city : row) {
-                if (city != null && (Math.abs(city.getLocation().getX() - location.getX()) <= 1 || Math.abs(city.getLocation().getY() - location.getY()) <= 1)) {
+                if (city != null && (Math.abs(city.getLocation().getX() - location.getX()) <= 0 && Math.abs(city.getLocation().getY() - location.getY()) <= 0)) {
+                    System.out.println("City: " + city.getName() + " is on the same location as new city: " + location.toString());
                     return true;
                 }
             }
         }
         for (int cut : horizontal_cuts) {
-            if (Math.abs(cut - location.getY()) <= 1) {
+            if (Math.abs(cut - location.getY()) <= 0) {
+                System.out.println("Horizontal cut is on this location: " + cut);
                 return true;
             }
         }
         for (int cut : vertical_cuts) {
-            if (Math.abs(cut - location.getX()) <= 1) {
+            if (Math.abs(cut - location.getX()) <= 0) {
+                System.out.println("Vertical cut is on this location: " + cut);
                 return true;
             }
         }
@@ -126,26 +137,26 @@ public class GridIndex {
         return grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y] != null;
     }
 
-    private GridAddressIndexes getCityGridAddressIndexes(City city){
+    private GridAddressIndexes getCityGridAddressIndexes(City city) {
         Location cityLocation = city.getLocation();
         int xIndex = getCityXIndexInGridAddress(cityLocation.getX());
         int yIndex = getCityYIndexInGridAddress(cityLocation.getY());
-        return new GridAddressIndexes(xIndex,yIndex);
+        return new GridAddressIndexes(xIndex, yIndex);
     }
 
-    private int getCityXIndexInGridAddress(int cityX){
-        for(int i = 0; i < vertical_cuts.length; i++) {
+    private int getCityXIndexInGridAddress(int cityX) {
+        for (int i = 0; i < vertical_cuts.length; i++) {
             if (cityX < vertical_cuts[i]) {
-                 return i-1;
+                return i - 1;
             }
         }
         return -1;
     }
 
-    private int getCityYIndexInGridAddress(int cityY){
-        for(int i = 0; i < horizontal_cuts.length; i++) {
+    private int getCityYIndexInGridAddress(int cityY) {
+        for (int i = 0; i < horizontal_cuts.length; i++) {
             if (cityY < horizontal_cuts[i]) {
-                 return i-1;
+                return i - 1;
             }
         }
         return -1;
@@ -162,12 +173,6 @@ public class GridIndex {
     }
 
     private void performHorizontalCut(City city) {
-        //TODO
-        // takže mám lokaci města
-        // nejprve zjistím v jakém je sloupci tedy v horizontal_cuts najdu dvě za sebou jdoucí hodnoty mezi kterými leží
-        // Pak najdu město které je nejblíže v tomto sektoru a mezi nima přibliže uprostřed udělám cut.
-        // pak upravím hodnoty v horizontal_cuts
-        // pak upravím hodnoty v grid_addresory
 
         GridAddressIndexes cityGridAddressIndexes = getCityGridAddressIndexes(city);
         City cityInGrid = grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y];
@@ -175,27 +180,35 @@ public class GridIndex {
 
         // Check if inBetween intersects with any existing city
         for (int i = 0; i < grid_address.length; i++) {
-            City existingCity = grid_address[i][cityGridAddressIndexes.x];
+            City existingCity = grid_address[i][cityGridAddressIndexes.y];
             if (existingCity != null && existingCity.getLocation().getY() == inBetween) {
-                throw new IllegalArgumentException("Cut cannot intersect with an existing city at X: " + inBetween);
+                if (Math.abs(cityInGrid.getLocation().getY() - city.getLocation().getY()) <= 1) {
+                    throw new IllegalArgumentException("Cut cannot intersect with an existing city at Y: " + inBetween);
+                } else {
+                    inBetween++;
+                }
             }
         }
+
+        System.out.println("Performing new vertical cut at y: " + inBetween + " between " + cityInGrid.getName() + " y: " + cityInGrid.getLocation().getY() + " and " + city.getName() + " y: "+ city.getLocation().getY());
 
         int[] newHorizontalCuts = new int[horizontal_cuts.length + 1];
         int indexForInBetween = -1;
         for (int i = 1; i < horizontal_cuts.length; i++) {
-            if (horizontal_cuts[i-1] < inBetween && horizontal_cuts[i] > inBetween) {
+            if (horizontal_cuts[i - 1] < inBetween && horizontal_cuts[i] > inBetween) {
                 indexForInBetween = i;
                 break;
             }
         }
+
+        // nakopíruju pole po index nového řezu
         System.arraycopy(horizontal_cuts, 0, newHorizontalCuts, 0, indexForInBetween);
         newHorizontalCuts[indexForInBetween] = inBetween;
+        // nakopíruju pole od nového řezu dál
         System.arraycopy(horizontal_cuts, indexForInBetween, newHorizontalCuts, indexForInBetween + 1, horizontal_cuts.length - indexForInBetween);
         horizontal_cuts = newHorizontalCuts;
 
-        // vytvořím si nové o jedna větší pole
-
+        // vytvořím si nové pole s o jedna delšími sloupci
         grid_address = new City[grid_address.length][grid_address[0].length + 1];
     }
 
@@ -208,14 +221,22 @@ public class GridIndex {
         for (int i = 0; i < grid_address.length; i++) {
             City existingCity = grid_address[i][cityGridAddressIndexes.y];
             if (existingCity != null && existingCity.getLocation().getX() == inBetween) {
-                throw new IllegalArgumentException("Cut cannot intersect with an existing city at X: " + inBetween);
+
+                if (Math.abs(cityInGrid.getLocation().getX() - city.getLocation().getX()) <= 1) {
+                    throw new IllegalArgumentException("Cut cannot intersect with an existing city at X: " + inBetween);
+                } else {
+                    inBetween++;
+                }
+
             }
         }
+
+        System.out.println("Performing new vertical cut at x: " + inBetween + " between " + cityInGrid.getName() + " x: " + cityInGrid.getLocation().getX() + " and " + city.getName() + " x: "+ city.getLocation().getX());
 
         int[] newWidthCuts = new int[vertical_cuts.length + 1];
         int indexForInBetween = -1;
         for (int i = 1; i < vertical_cuts.length; i++) {
-            if (vertical_cuts[i-1] < inBetween && vertical_cuts[i] > inBetween) {
+            if (vertical_cuts[i - 1] < inBetween && vertical_cuts[i] > inBetween) {
                 indexForInBetween = i;
                 break;
             }
@@ -225,10 +246,16 @@ public class GridIndex {
         System.arraycopy(vertical_cuts, indexForInBetween, newWidthCuts, indexForInBetween + 1, horizontal_cuts.length - indexForInBetween);
         vertical_cuts = newWidthCuts;
 
-        grid_address = new City[grid_address.length+1][grid_address[0].length];
+        grid_address = new City[grid_address.length + 1][grid_address[0].length];
     }
 
-    private void mapAllCitiesToGridAddress(){
+    private void mapAllCitiesToGridAddress() {
+        // grid_address naplnit null
+        for (int i = 0; i < grid_address.length; i++) {
+            for (int j = 0; j < grid_address[0].length; j++) {
+                grid_address[i][j] = null;
+            }
+        }
         for (String key : graph.getVertices().keySet()) {
             City city = graph.getVertex(key);
             addCityToGridAddress(city);
@@ -237,7 +264,7 @@ public class GridIndex {
 
     private void addCityToGridAddress(City city) {
         GridAddressIndexes cityGridAddressIndexes = getCityGridAddressIndexes(city);
-        if(grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y] != null) {
+        if (grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y] != null) {
             throw new IllegalArgumentException("Index is already in use!");
         }
         grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y] = city;

@@ -18,7 +18,7 @@ public class App {
     GridIndex gridIndex;
 
     public App() {
-        this.gridIndex = new GridIndex(1000, 1000);
+        this.gridIndex = new GridIndex(50, 70);
         this.graph = gridIndex.getGraph();
 //        generateGraph(graph);
 //        generateAssigmentGraph();
