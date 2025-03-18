@@ -11,14 +11,13 @@ public class GridIndexSearchForm extends JPanel{
 
     private final GridIndex gridIndex;
     private final GraphPanel graphPanel;
-    private java.util.List<Runnable> listeners = new ArrayList<>();
-    JTextField x1;
-    JTextField y1;
-    JTextField x2;
-    JTextField y2;
+    JTextField rectangleSearchX1;
+    JTextField rectangleSearchY1;
+    JTextField rectangleSearchX2;
+    JTextField rectangleSearchY2;
 
-    JTextField x3; //TODO rename
-    JTextField y3;
+    JTextField pointSearchX;
+    JTextField pointSearchY;
 
 
     public GridIndexSearchForm(GridIndex gridIndex, GraphPanel graphPanel) {
@@ -27,56 +26,46 @@ public class GridIndexSearchForm extends JPanel{
         initComponent();
     }
 
-    public void addListener(Runnable listener) {
-        listeners.add(listener);
-    }
-
-    private void notifyListeners() {
-        for (Runnable listener : listeners) {
-            listener.run();
-        }
-    }
-
     private void initComponent() {
         setLayout(new GridLayout(0, 3));
-        x1 = new JTextField(20);
-        y1 = new JTextField(20);
-        x2 = new JTextField(20);
-        y2 = new JTextField(20);
+        rectangleSearchX1 = new JTextField(20);
+        rectangleSearchY1 = new JTextField(20);
+        rectangleSearchX2 = new JTextField(20);
+        rectangleSearchY2 = new JTextField(20);
         JLabel xLabel = new JLabel("X:");
         JLabel yLabel = new JLabel("Y:");
 
         add(xLabel);
-        add(x1);
-        add(x2);
+        add(rectangleSearchX1);
+        add(rectangleSearchX2);
         add(yLabel);
-        add(y1);
-        add(y2);
+        add(rectangleSearchY1);
+        add(rectangleSearchY2);
 
         JButton searchButton = new JButton("Hledat");
         searchButton.addActionListener(e -> {search();});
         add(searchButton);
 
-        x3 = new JTextField(20);
-        y3 = new JTextField(20);
-        JLabel xLabel3 = new JLabel("bodové vyhledávání:");
-        JButton serachPoint = new JButton("Hledat");
+        pointSearchX = new JTextField(20);
+        pointSearchY = new JTextField(20);
+        JLabel pointSearchLabel = new JLabel("bodové vyhledávání:");
+        JButton searchPointBtn = new JButton("Hledat");
         JLabel nothing = new JLabel("");
         JLabel nothing2 = new JLabel("");
         add(nothing);
         add(nothing2);
-        serachPoint.addActionListener(e -> {searchPoint();});
-        add(xLabel3);
-        add(x3);
-        add(y3);
-        add(serachPoint);
+        searchPointBtn.addActionListener(e -> {searchPoint();});
+        add(pointSearchLabel);
+        add(pointSearchX);
+        add(pointSearchY);
+        add(searchPointBtn);
     };
 
     private void search() {
-        int x1 = Integer.parseInt(this.x1.getText());
-        int y1 = Integer.parseInt(this.y1.getText());
-        int x2 = Integer.parseInt(this.x2.getText());
-        int y2 = Integer.parseInt(this.y2.getText());
+        int x1 = Integer.parseInt(this.rectangleSearchX1.getText());
+        int y1 = Integer.parseInt(this.rectangleSearchY1.getText());
+        int x2 = Integer.parseInt(this.rectangleSearchX2.getText());
+        int y2 = Integer.parseInt(this.rectangleSearchY2.getText());
 
         if(x1 < 0 || x1 >= gridIndex.getWidth() || y1 < 0 || y1 >= gridIndex.getHeight() || x2 < 0 || x2 >= gridIndex.getWidth() || y2 < 0 || y2 >= gridIndex.getHeight()) {
             JOptionPane.showMessageDialog(null, "Neplatné souřadnice");
@@ -88,19 +77,18 @@ public class GridIndexSearchForm extends JPanel{
         graphPanel.setCitiesSearchedInGraphIndex(cities);
         graphPanel.setSearchDimensions(x1, y1, x2, y2);
         graphPanel.repaint();
-        notifyListeners();
     }
 
     private void searchPoint() {
-        int x = Integer.parseInt(this.x3.getText());
-        int y = Integer.parseInt(this.y3.getText());
+        int x = Integer.parseInt(this.pointSearchX.getText());
+        int y = Integer.parseInt(this.pointSearchY.getText());
 
         if(x < 0 || x >= gridIndex.getWidth() || y < 0 || y >= gridIndex.getHeight()) {
             JOptionPane.showMessageDialog(null, "Neplatne souradnice");
         }
 
         City city = gridIndex.findCityByCoordinates(x,y);
-        graphPanel.setFoundCity(city);
+        graphPanel.setFoundCityByCoordinates(city);
         graphPanel.repaint();
 
         if(city == null)

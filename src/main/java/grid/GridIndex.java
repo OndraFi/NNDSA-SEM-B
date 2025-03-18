@@ -5,7 +5,6 @@ import main.java.Location;
 import main.java.Road;
 import main.java.graph.Graph;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -17,14 +16,14 @@ public class GridIndex {
     private int[] horizontal_cuts; // z leva do prava
     private int[] vertical_cuts; // z vrchu dolu
 
-    private int HORIZONTAL_CUT = 0;
-    private int VERTICAL_CUT = 1;
+    private static final int HORIZONTAL_CUT = 0;
+    private static final int VERTICAL_CUT = 1;
 
     private int lastCut = HORIZONTAL_CUT;
 
     private City[][] grid_address;
 
-    private class GridAddressIndexes {
+    private static class GridAddressIndexes {
         int x;
         int y;
 
@@ -33,7 +32,6 @@ public class GridIndex {
             this.y = y;
         }
     }
-
 
     public GridIndex(int width, int height) {
         this.width = width;
@@ -65,6 +63,10 @@ public class GridIndex {
     }
 
     public void addCity(String key, City city) throws IllegalArgumentException {
+        if(city.getLocation().getX() >= width || city.getLocation().getY() >= height) {
+            throw new IllegalArgumentException("City is out of bounds");
+        }
+
         if (isLocationOccupied(city.getLocation())) {
             System.out.println("Location is ocupaied, throwing exception");
             throw new IllegalArgumentException("Location is already occupied by another city or a cut. City:" + city.toString());
@@ -127,18 +129,6 @@ public class GridIndex {
     }
 
     public City findCityByCoordinates(int x, int y) throws IllegalArgumentException {
-//        if (x < 0 || x > width || y < 0 || y > height) {
-//            throw new IllegalArgumentException("Coordinates are out of bounds");
-//        }
-//
-//        int xIndex = getCityXIndexInGridAddress(x);
-//        int yIndex = getCityYIndexInGridAddress(y);
-//
-//        if (xIndex == -1 || yIndex == -1) {
-//            return null;
-//        }
-//
-//        return grid_address[xIndex][yIndex];
         City foundCity = null;
         for(City city : graph.getVertices().values()){
             if(city.getLocation().getX() == x && city.getLocation().getY() == y){
@@ -192,7 +182,7 @@ public class GridIndex {
     }
 
     private boolean isCityInSearchDimensions(City city, int x1, int y1, int x2, int y2) {
-        return city.getLocation().getX() > x1 && city.getLocation().getY() > y1 && city.getLocation().getX() < x2 && city.getLocation().getY() < y2;
+        return city.getLocation().getX() >= x1 && city.getLocation().getY() >= y1 && city.getLocation().getX() <= x2 && city.getLocation().getY() <= y2;
     }
 
     private boolean shouldPerformCut(City city) {

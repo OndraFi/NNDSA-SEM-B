@@ -18,23 +18,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GraphPanel extends JPanel {
-    private Map<String, Point> positions;
-    private Graph<String, City, Road> graph;
+    private final Graph<String, City, Road> graph;
     private final GridIndex gridIndex;
     private double scaleX, scaleY;
-    private double zoomFactor = 1.0;
-    private double zoomMultiplier = 1.1;
+    private final double zoomFactor = 1.0;
     private Point dragStartScreen;
     private Point dragEndScreen;
-    private AffineTransform coordTransform = new AffineTransform();
+    private final AffineTransform coordTransform = new AffineTransform();
     private ArrayList<String> path;
 
     private ArrayList<City> citiesSearchedInGraphIndex; // najité města v gridIndexu
-    private int x1, y1, x2, y2; // dimenze vyhledávaného obdélníku
-    private City foundCity; // najité město pomocí bodu
+    private int searchRectangleX1, searchRectangleY1, searchRectangleX2, searchRectangleY2; // dimenze vyhledávaného obdélníku
+    private City foundCityByCoordinates; // najité město pomocí bodu
 
     public GraphPanel( GridIndex gridIndex, Dimension size) {
-        this.positions = new HashMap<>();
         this.graph = gridIndex.getGraph();
         this.gridIndex = gridIndex;
         this.setPreferredSize(size);
@@ -44,15 +41,15 @@ public class GraphPanel extends JPanel {
     }
 
 
-    public void setFoundCity(City foundCity) {
-        this.foundCity = foundCity;
+    public void setFoundCityByCoordinates(City foundCityByCoordinates) {
+        this.foundCityByCoordinates = foundCityByCoordinates;
     }
 
     public void setSearchDimensions(int x1, int y1, int x2, int y2) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
+        this.searchRectangleX1 = x1;
+        this.searchRectangleY1 = y1;
+        this.searchRectangleX2 = x2;
+        this.searchRectangleY2 = y2;
     }
 
     public void setCitiesSearchedInGraphIndex(ArrayList<City> citiesSearchedInGraphIndex) {
@@ -189,13 +186,13 @@ public class GraphPanel extends JPanel {
         if(citiesSearchedInGraphIndex != null) {
             g2.setColor(new Color(255, 205, 0, 50)); // Blue color with 50% opacity
 
-            g2.fillRect(x1, y1, x2 - x1, y2 - y1); // Corrected width and height calculation
+            g2.fillRect(searchRectangleX1, searchRectangleY1, searchRectangleX2 - searchRectangleX1, searchRectangleY2 - searchRectangleY1); // Corrected width and height calculation
 
             // Draw dashed rectangle
             float[] dashPattern = {1, 1};
             g2.setColor(Color.orange);
             g2.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, dashPattern, 0));
-            g2.drawRect(x1, y1, x2 - x1, y2 - y1);
+            g2.drawRect(searchRectangleX1, searchRectangleY1, searchRectangleX2 - searchRectangleX1, searchRectangleY2 - searchRectangleY1);
 
             g2.setStroke(new BasicStroke());
             g2.setColor(Color.black);
@@ -208,11 +205,11 @@ public class GraphPanel extends JPanel {
             int y = (int) loc.getY();
             int ovalSize = (int) Math.max(2, 1 * zoomFactor);  // Base size is 5, adjusted with zoom
 
-            if(citiesSearchedInGraphIndex != null && x > x1 && x < x2 && y > y1 && y < y2) {
+            if(citiesSearchedInGraphIndex != null && x >= searchRectangleX1 && x <= searchRectangleX2 && y >= searchRectangleY1 && y <= searchRectangleY2) {
                 g2.setColor(new Color(255, 205, 0)); // Blue color with 50% opacity
             }
 
-            if(city.equals(foundCity)) {
+            if(city.equals(foundCityByCoordinates)) {
                 g2.setColor(Color.cyan);
             }
 
