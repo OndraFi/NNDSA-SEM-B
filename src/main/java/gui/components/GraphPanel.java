@@ -29,6 +29,10 @@ public class GraphPanel extends JPanel {
     private AffineTransform coordTransform = new AffineTransform();
     private ArrayList<String> path;
 
+    private ArrayList<City> citiesSearchedInGraphIndex; // najité města v gridIndexu
+    private int x1, y1, x2, y2; // dimenze vyhledávaného obdélníku
+    private City foundCity; // najité město pomocí bodu
+
     public GraphPanel( GridIndex gridIndex, Dimension size) {
         this.positions = new HashMap<>();
         this.graph = gridIndex.getGraph();
@@ -37,6 +41,22 @@ public class GraphPanel extends JPanel {
         calculateScaleFactors();
         setupMouseWheelZoom();
         setupMousePan();
+    }
+
+
+    public void setFoundCity(City foundCity) {
+        this.foundCity = foundCity;
+    }
+
+    public void setSearchDimensions(int x1, int y1, int x2, int y2) {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
+    }
+
+    public void setCitiesSearchedInGraphIndex(ArrayList<City> citiesSearchedInGraphIndex) {
+        this.citiesSearchedInGraphIndex = citiesSearchedInGraphIndex;
     }
 
     public void setPath(ArrayList<String> path) {
@@ -165,6 +185,22 @@ public class GraphPanel extends JPanel {
         g2.drawLine(0,0,0,gridHeight);
         g2.drawLine(gridWidth,0,gridWidth,gridHeight);
 
+        //Draw searched cities
+        if(citiesSearchedInGraphIndex != null) {
+            g2.setColor(new Color(255, 205, 0, 50)); // Blue color with 50% opacity
+
+            g2.fillRect(x1, y1, x2 - x1, y2 - y1); // Corrected width and height calculation
+
+            // Draw dashed rectangle
+            float[] dashPattern = {1, 1};
+            g2.setColor(Color.orange);
+            g2.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, dashPattern, 0));
+            g2.drawRect(x1, y1, x2 - x1, y2 - y1);
+
+            g2.setStroke(new BasicStroke());
+            g2.setColor(Color.black);
+        }
+
         // Draw vertices
         for (City city : graph.getVertices().values()) {
             Location loc = city.getLocation();
@@ -172,11 +208,22 @@ public class GraphPanel extends JPanel {
             int y = (int) loc.getY();
             int ovalSize = (int) Math.max(2, 1 * zoomFactor);  // Base size is 5, adjusted with zoom
 
+            if(citiesSearchedInGraphIndex != null && x > x1 && x < x2 && y > y1 && y < y2) {
+                g2.setColor(new Color(255, 205, 0)); // Blue color with 50% opacity
+            }
+
+            if(city.equals(foundCity)) {
+                g2.setColor(Color.cyan);
+            }
+
             // Vertex
             g2.fillOval(x - ovalSize / 2, y - ovalSize / 2, ovalSize, ovalSize);
             // Text
             g2.drawString(city.getName(), x - ovalSize / 2, y - ovalSize / 2);
+
+            g2.setColor(Color.black);
         }
+
 
         // Draw edges
         for (EdgeData<String,Road> edge : graph.getEdges()) {

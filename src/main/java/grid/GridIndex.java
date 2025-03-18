@@ -5,6 +5,8 @@ import main.java.Location;
 import main.java.Road;
 import main.java.graph.Graph;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class GridIndex {
@@ -124,12 +126,73 @@ public class GridIndex {
         graph.addEdge(from, to, road);
     }
 
-    public void findCityByCoordinates(int x, int y) {
-        //TODO
+    public City findCityByCoordinates(int x, int y) throws IllegalArgumentException {
+//        if (x < 0 || x > width || y < 0 || y > height) {
+//            throw new IllegalArgumentException("Coordinates are out of bounds");
+//        }
+//
+//        int xIndex = getCityXIndexInGridAddress(x);
+//        int yIndex = getCityYIndexInGridAddress(y);
+//
+//        if (xIndex == -1 || yIndex == -1) {
+//            return null;
+//        }
+//
+//        return grid_address[xIndex][yIndex];
+        City foundCity = null;
+        for(City city : graph.getVertices().values()){
+            if(city.getLocation().getX() == x && city.getLocation().getY() == y){
+                foundCity = city;
+                break;
+            }
+        }
+        return foundCity;
     }
 
-    public void findCityBySegment(int x1, int y1, int x2, int y2) {
-        //TODO
+    public ArrayList<City> findCityBySegment(int x1, int y1, int x2, int y2) {
+
+        if (x1 < 0 || x1 > width || y1 < 0 || y1 > height || x2 < 0 || x2 > width || y2 < 0 || y2 > height) {
+            throw new IllegalArgumentException("Coordinates are out of bounds");
+        }
+
+        int xStartIndex = -1;
+        int xEndIndex = -1;
+        for (int i = 0; i < vertical_cuts.length; i++) {
+            if (vertical_cuts[i] > x1) {
+                xStartIndex = i - 1;
+            }
+            if (vertical_cuts[i] >= x2) {
+                xEndIndex = i;
+            }
+        }
+
+        int yStartIndex = -1;
+        int yEndIndex = -1;
+
+        for (int i = 0; i < horizontal_cuts.length; i++) {
+            if (horizontal_cuts[i] > y1) {
+                yStartIndex = i - 1;
+            }
+            if (horizontal_cuts[i] >= y2) {
+                yEndIndex = i;
+            }
+        }
+
+        ArrayList<City> cities = new ArrayList<>();
+
+        for (int i = xStartIndex; i < xEndIndex; i++) {
+            for (int j = yStartIndex; j < yEndIndex; j++) {
+                if (grid_address[i][j] != null && isCityInSearchDimensions(grid_address[i][j], x1, y1, x2, y2)) {
+                    cities.add(grid_address[i][j]);
+                }
+            }
+        }
+
+        return cities;
+    }
+
+    private boolean isCityInSearchDimensions(City city, int x1, int y1, int x2, int y2) {
+        return city.getLocation().getX() > x1 && city.getLocation().getY() > y1 && city.getLocation().getX() < x2 && city.getLocation().getY() < y2;
     }
 
     private boolean shouldPerformCut(City city) {
@@ -172,25 +235,52 @@ public class GridIndex {
         }
     }
 
+    private boolean canAddToInBetween(int cityInGrid, int city, int inBetween) {
+        if (Math.abs(cityInGrid - city) > 1)
+            if (inBetween < cityInGrid && inBetween > city)
+                return (Math.abs(cityInGrid - inBetween) > 1);
+        if ((inBetween > cityInGrid && inBetween < city))
+            return Math.abs(city - inBetween) > 1;
+        return false;
+    }
+
+    private boolean canRetrieveFromInBetween(int cityInGrid, int city, int inBetween) {
+        if (Math.abs(cityInGrid - city) > 1)
+            if (inBetween < cityInGrid && inBetween > city)
+                return (Math.abs(city - inBetween) > 1);
+        if ((inBetween > cityInGrid && inBetween < city))
+            return Math.abs(cityInGrid - inBetween) > 1;
+        return false;
+    }
+
     private void performHorizontalCut(City city) {
 
         GridAddressIndexes cityGridAddressIndexes = getCityGridAddressIndexes(city);
         City cityInGrid = grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y];
         int inBetween = Math.round((cityInGrid.getLocation().getY() + city.getLocation().getY()) / 2.0f);
 
-        // Check if inBetween intersects with any existing city
-        for (int i = 0; i < grid_address.length; i++) {
-            City existingCity = grid_address[i][cityGridAddressIndexes.y];
-            if (existingCity != null && existingCity.getLocation().getY() == inBetween) {
-                if (Math.abs(cityInGrid.getLocation().getY() - city.getLocation().getY()) <= 1) {
-                    throw new IllegalArgumentException("Cut cannot intersect with an existing city at Y: " + inBetween);
-                } else {
-                    inBetween++;
+        boolean didChangeInBetween = false;
+
+        do {
+            // Check if inBetween intersects with any existing city
+            for (int i = 0; i < grid_address.length; i++) {
+                City existingCity = grid_address[i][cityGridAddressIndexes.y];
+                if (existingCity != null && existingCity.getLocation().getY() == inBetween) {
+
+                    //  v případě že řez prochází nějakým městem, tak se pokusit posunout řez, jinak výjmka, jelilkož řez nejde provézt
+                    if (canAddToInBetween(cityInGrid.getLocation().getY(), city.getLocation().getY(), inBetween)) {
+                        inBetween++;
+                    } else if (canRetrieveFromInBetween(cityInGrid.getLocation().getY(), city.getLocation().getY(), inBetween)) {
+                        inBetween--;
+                    } else {
+                        throw new IllegalArgumentException("Cut cannot intersect with an existing city at Y: " + inBetween);
+                    }
+
                 }
             }
-        }
+        } while (didChangeInBetween);
 
-        System.out.println("Performing new vertical cut at y: " + inBetween + " between " + cityInGrid.getName() + " y: " + cityInGrid.getLocation().getY() + " and " + city.getName() + " y: "+ city.getLocation().getY());
+        System.out.println("Performing new vertical cut at y: " + inBetween + " between " + cityInGrid.getName() + " y: " + cityInGrid.getLocation().getY() + " and " + city.getName() + " y: " + city.getLocation().getY());
 
         int[] newHorizontalCuts = new int[horizontal_cuts.length + 1];
         int indexForInBetween = -1;
@@ -217,21 +307,29 @@ public class GridIndex {
         City cityInGrid = grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y];
         int inBetween = Math.round((cityInGrid.getLocation().getX() + city.getLocation().getX()) / 2.0f);
 
-        // Check if inBetween intersects with any existing city
-        for (int i = 0; i < grid_address.length; i++) {
-            City existingCity = grid_address[i][cityGridAddressIndexes.y];
-            if (existingCity != null && existingCity.getLocation().getX() == inBetween) {
+        boolean didChangeInBetween = false;
+        do {
+            // Check if inBetween intersects with any existing city
+            for (int i = 0; i < grid_address.length; i++) {
+                City existingCity = grid_address[i][cityGridAddressIndexes.y];
+                if (existingCity != null && existingCity.getLocation().getX() == inBetween) {
 
-                if (Math.abs(cityInGrid.getLocation().getX() - city.getLocation().getX()) <= 1) {
-                    throw new IllegalArgumentException("Cut cannot intersect with an existing city at X: " + inBetween);
-                } else {
-                    inBetween++;
+                    //  v případě že řez prochází nějakým městem, tak se pokusit posunout řez, jinak výjmka, jelilkož řez nejde provézt
+                    if (canAddToInBetween(cityInGrid.getLocation().getX(), city.getLocation().getX(), inBetween)) {
+                        inBetween++;
+                        didChangeInBetween = true;
+                    } else if (canRetrieveFromInBetween(cityInGrid.getLocation().getX(), city.getLocation().getX(), inBetween)) {
+                        inBetween--;
+                        didChangeInBetween = true;
+                    } else {
+                        throw new IllegalArgumentException("Cut cannot intersect with an existing city at X: " + inBetween);
+                    }
                 }
-
             }
-        }
+        } while (didChangeInBetween);
 
-        System.out.println("Performing new vertical cut at x: " + inBetween + " between " + cityInGrid.getName() + " x: " + cityInGrid.getLocation().getX() + " and " + city.getName() + " x: "+ city.getLocation().getX());
+
+        System.out.println("Performing new vertical cut at x: " + inBetween + " between " + cityInGrid.getName() + " x: " + cityInGrid.getLocation().getX() + " and " + city.getName() + " x: " + city.getLocation().getX());
 
         int[] newWidthCuts = new int[vertical_cuts.length + 1];
         int indexForInBetween = -1;

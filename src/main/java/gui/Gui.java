@@ -20,6 +20,7 @@ public class Gui extends JFrame {
     private RoadForm roadForm;
     private GraphIOForm graphIOForm;
     private DijkstraForm dijkstraForm;
+    private GridIndexSearchForm gridIndexSearchForm;
 
     public Gui( GridIndex gridIndex) {
         super("Semestrálí práce B Ondřej Fiala");
@@ -48,9 +49,17 @@ public class Gui extends JFrame {
 
         addCityForm();
         addRoadForm();
+        addGridIndexSearchForm();
         addGraphIOForm();
         addDijkstraForm();
 
+    }
+
+    private void addGridIndexSearchForm(){
+        gridIndexSearchForm = new GridIndexSearchForm(gridIndex,graphPanel);
+        sidebar.add(gridIndexSearchForm);
+        sidebar.revalidate();
+        sidebar.repaint();
     }
 
     private void addCityForm() {
@@ -59,6 +68,8 @@ public class Gui extends JFrame {
             roadForm.mapVerticesToComboBoxes();
             dijkstraForm.mapVerticesToComboBoxes();
             dijkstraForm.changesWareMadeInGraph();
+            graphPanel.setCitiesSearchedInGraphIndex(null);
+            graphPanel.setSearchDimensions(0,0,0,0);
             repaint();
         });
         sidebar.add(cityForm);
