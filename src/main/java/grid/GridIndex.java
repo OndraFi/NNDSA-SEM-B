@@ -252,16 +252,20 @@ public class GridIndex {
         boolean didChangeInBetween = false;
 
         do {
+            didChangeInBetween = false;
             // Check if inBetween intersects with any existing city
-            for (int i = 0; i < grid_address.length; i++) {
-                City existingCity = grid_address[i][cityGridAddressIndexes.y];
+            for (City existingCity : graph.getVertices().values()) {
                 if (existingCity != null && existingCity.getLocation().getY() == inBetween) {
 
                     //  v případě že řez prochází nějakým městem, tak se pokusit posunout řez, jinak výjmka, jelilkož řez nejde provézt
                     if (canAddToInBetween(cityInGrid.getLocation().getY(), city.getLocation().getY(), inBetween)) {
                         inBetween++;
+                        didChangeInBetween = true;
+                        break;
                     } else if (canRetrieveFromInBetween(cityInGrid.getLocation().getY(), city.getLocation().getY(), inBetween)) {
                         inBetween--;
+                        didChangeInBetween = true;
+                        break;
                     } else {
                         throw new IllegalArgumentException("Cut cannot intersect with an existing city at Y: " + inBetween);
                     }
@@ -299,18 +303,21 @@ public class GridIndex {
 
         boolean didChangeInBetween = false;
         do {
+            didChangeInBetween = false;
             // Check if inBetween intersects with any existing city
-            for (int i = 0; i < grid_address.length; i++) {
-                City existingCity = grid_address[i][cityGridAddressIndexes.y];
+            for (City existingCity : graph.getVertices().values()) {
+//                City existingCity = grid_address[i][cityGridAddressIndexes.y];
                 if (existingCity != null && existingCity.getLocation().getX() == inBetween) {
 
                     //  v případě že řez prochází nějakým městem, tak se pokusit posunout řez, jinak výjmka, jelilkož řez nejde provézt
                     if (canAddToInBetween(cityInGrid.getLocation().getX(), city.getLocation().getX(), inBetween)) {
                         inBetween++;
                         didChangeInBetween = true;
+                        break;
                     } else if (canRetrieveFromInBetween(cityInGrid.getLocation().getX(), city.getLocation().getX(), inBetween)) {
                         inBetween--;
                         didChangeInBetween = true;
+                        break;
                     } else {
                         throw new IllegalArgumentException("Cut cannot intersect with an existing city at X: " + inBetween);
                     }
