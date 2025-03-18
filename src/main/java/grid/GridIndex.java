@@ -1,18 +1,16 @@
 package main.java.grid;
 
-import main.java.City;
 import main.java.Location;
-import main.java.Road;
-import main.java.graph.Graph;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class GridIndex {
+public class GridIndex<T extends LocationInterface> { // todo generický
     private final int width;
     private final int height;
-    private final Graph<String, City, Road> graph;
-
+    private final ArrayList<T> elements = new ArrayList<>();
+    private final Class<T> Tclass;
     private int[] horizontal_cuts; // z leva do prava
     private int[] vertical_cuts; // z vrchu dolu
 
@@ -21,7 +19,7 @@ public class GridIndex {
 
     private int lastCut = HORIZONTAL_CUT;
 
-    private City[][] grid_address;
+    private T[][] grid_address;
 
     private static class GridAddressIndexes {
         int x;
@@ -33,13 +31,14 @@ public class GridIndex {
         }
     }
 
-    public GridIndex(int width, int height) {
+    public GridIndex(int width, int height, Class<T> clazz) {
         this.width = width;
         this.height = height;
-        this.graph = new Graph<>();
         this.horizontal_cuts = new int[]{0, height};
         this.vertical_cuts = new int[]{0, width};
-        this.grid_address = new City[1][1];
+        this.Tclass = clazz;
+        this.grid_address = (T[][]) Array.newInstance(clazz, 1, 1);
+
     }
 
     public int getWidth() {
@@ -58,26 +57,21 @@ public class GridIndex {
         return vertical_cuts;
     }
 
-    public Graph<String, City, Road> getGraph() {
-        return graph;
-    }
-
-    public void addCity(String key, City city) throws IllegalArgumentException {
-        if(city.getLocation().getX() >= width || city.getLocation().getY() >= height) {
-            throw new IllegalArgumentException("City is out of bounds");
+    public void add(T element) throws IllegalArgumentException {
+        if (element.getLocation().getX() >= width || element.getLocation().getY() >= height) {
+            throw new IllegalArgumentException("Element is out of bounds");
         }
 
-        if (isLocationOccupied(city.getLocation())) {
+        if (isLocationOccupied(element.getLocation())) {
             System.out.println("Location is ocupaied, throwing exception");
-            throw new IllegalArgumentException("Location is already occupied by another city or a cut. City:" + city.toString());
+            throw new IllegalArgumentException("Location is already occupied by another element or a cut. Element:" + element.toString());
         }
 
-        if (shouldPerformCut(city)) {
-            cut(city);
+        if (shouldPerformCut(element)) {
+            cut(element);
         }
 
-        graph.addVertex(key, city);
-
+        elements.add(element);
         mapAllCitiesToGridAddress();
 
         printGrid();
@@ -91,7 +85,7 @@ public class GridIndex {
         for (int j = 0; j < grid_address[0].length; j++) {
             for (int i = 0; i < grid_address.length; i++) {
                 if (grid_address[i][j] != null) {
-                    System.out.print(grid_address[i][j].getName() + " ");
+                    System.out.print(grid_address[i][j].toString() + " ");
                 } else {
                     System.out.print("* ");
                 }
@@ -101,10 +95,10 @@ public class GridIndex {
     }
 
     private boolean isLocationOccupied(Location location) {
-        for (City[] row : grid_address) {
-            for (City city : row) {
-                if (city != null && (Math.abs(city.getLocation().getX() - location.getX()) <= 0 && Math.abs(city.getLocation().getY() - location.getY()) <= 0)) {
-                    System.out.println("City: " + city.getName() + " is on the same location as new city: " + location.toString());
+        for (T[] row : grid_address) {
+            for (T element : row) {
+                if (element != null && (Math.abs(element.getLocation().getX() - location.getX()) <= 0 && Math.abs(element.getLocation().getY() - location.getY()) <= 0)) {
+//                    System.out.println("City: " + element.getName() + " is on the same location as new city: " + location.toString());
                     return true;
                 }
             }
@@ -124,22 +118,18 @@ public class GridIndex {
         return false;
     }
 
-    public void addRoad(String from, String to, Road road) {
-        graph.addEdge(from, to, road);
-    }
-
-    public City findCityByCoordinates(int x, int y) throws IllegalArgumentException {
-        City foundCity = null;
-        for(City city : graph.getVertices().values()){
-            if(city.getLocation().getX() == x && city.getLocation().getY() == y){
-                foundCity = city;
+    public T findElementsByCoordinates(int x, int y) throws IllegalArgumentException {
+        T foundElement = null;
+        for (T element : elements) {
+            if (element.getLocation().getX() == x && element.getLocation().getY() == y) {
+                foundElement = element;
                 break;
             }
         }
-        return foundCity;
+        return foundElement;
     }
 
-    public ArrayList<City> findCityBySegment(int x1, int y1, int x2, int y2) {
+    public ArrayList<T> findElementBySegment(int x1, int y1, int x2, int y2) {
 
         if (x1 < 0 || x1 > width || y1 < 0 || y1 > height || x2 < 0 || x2 > width || y2 < 0 || y2 > height) {
             throw new IllegalArgumentException("Coordinates are out of bounds");
@@ -168,113 +158,127 @@ public class GridIndex {
             }
         }
 
-        ArrayList<City> cities = new ArrayList<>();
+        ArrayList<T> elements = new ArrayList<>();
 
         for (int i = xStartIndex; i < xEndIndex; i++) {
             for (int j = yStartIndex; j < yEndIndex; j++) {
-                if (grid_address[i][j] != null && isCityInSearchDimensions(grid_address[i][j], x1, y1, x2, y2)) {
-                    cities.add(grid_address[i][j]);
+                if (grid_address[i][j] != null && isElementInSearchDimensions(grid_address[i][j], x1, y1, x2, y2)) {
+                    elements.add(grid_address[i][j]);
                 }
             }
         }
 
-        return cities;
+        return elements;
     }
 
-    private boolean isCityInSearchDimensions(City city, int x1, int y1, int x2, int y2) {
-        return city.getLocation().getX() >= x1 && city.getLocation().getY() >= y1 && city.getLocation().getX() <= x2 && city.getLocation().getY() <= y2;
+    private boolean isElementInSearchDimensions(T element, int x1, int y1, int x2, int y2) {
+        return element.getLocation().getX() >= x1 && element.getLocation().getY() >= y1 && element.getLocation().getX() <= x2 && element.getLocation().getY() <= y2;
     }
 
-    private boolean shouldPerformCut(City city) {
-        GridAddressIndexes cityGridAddressIndexes = getCityGridAddressIndexes(city);
-        return grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y] != null;
+    private boolean shouldPerformCut(T element) {
+        GridAddressIndexes elementGridAddressIndexes = getElementGridAddressIndexes(element);
+        return grid_address[elementGridAddressIndexes.x][elementGridAddressIndexes.y] != null;
     }
 
-    private GridAddressIndexes getCityGridAddressIndexes(City city) {
-        Location cityLocation = city.getLocation();
-        int xIndex = getCityXIndexInGridAddress(cityLocation.getX());
-        int yIndex = getCityYIndexInGridAddress(cityLocation.getY());
+    private GridAddressIndexes getElementGridAddressIndexes(T element) {
+        Location elementLocation = element.getLocation();
+        int xIndex = getElementXIndexInGridAddress(elementLocation.getX());
+        int yIndex = getElementYIndexInGridAddress(elementLocation.getY());
         return new GridAddressIndexes(xIndex, yIndex);
     }
 
-    private int getCityXIndexInGridAddress(int cityX) {
+    private int getElementXIndexInGridAddress(int elementX) {
         for (int i = 0; i < vertical_cuts.length; i++) {
-            if (cityX < vertical_cuts[i]) {
+            if (elementX < vertical_cuts[i]) {
                 return i - 1;
             }
         }
         return -1;
     }
 
-    private int getCityYIndexInGridAddress(int cityY) {
+    private int getElementYIndexInGridAddress(int elementY) {
         for (int i = 0; i < horizontal_cuts.length; i++) {
-            if (cityY < horizontal_cuts[i]) {
+            if (elementY < horizontal_cuts[i]) {
                 return i - 1;
             }
         }
         return -1;
     }
 
-    private void cut(City city) {
+    private void cut(T element) {
         if (lastCut == HORIZONTAL_CUT) {
-            performVerticalCut(city);
-            lastCut = VERTICAL_CUT;
+            // střídám, takže chci řezat druhým směrem
+            boolean cutSuccessful = performVerticalCut(element);
+            if (!cutSuccessful) { // pokud to nejde tak zkusím horizontálně
+                boolean horizontalCutSuccessful = performHorizontalCut(element);
+                if (!horizontalCutSuccessful) // pokud nejde ani horizonrálně, tak výjmka
+                    throw new IllegalArgumentException("Cannot cut the grid");
+            } else {
+                lastCut = VERTICAL_CUT;
+            }
         } else {
-            performHorizontalCut(city);
-            lastCut = HORIZONTAL_CUT;
+            boolean horizontalCutSuccessful = performHorizontalCut(element);
+            if (!horizontalCutSuccessful) {
+                boolean verticalCutSuccessful = performVerticalCut(element);
+                if (!verticalCutSuccessful)
+                    throw new IllegalArgumentException("Cannot cut the grid");
+            } else {
+                lastCut = HORIZONTAL_CUT;
+            }
         }
     }
 
-    private boolean canAddToInBetween(int cityInGrid, int city, int inBetween) {
-        if (Math.abs(cityInGrid - city) > 1)
-            if (inBetween < cityInGrid && inBetween > city)
-                return (Math.abs(cityInGrid - inBetween) > 1);
-        if ((inBetween > cityInGrid && inBetween < city))
-            return Math.abs(city - inBetween) > 1;
+    private boolean canAddToInBetween(int elementInGridPosition, int newElementPosition, int inBetween) {
+        if (Math.abs(elementInGridPosition - newElementPosition) > 1)
+            if (inBetween < elementInGridPosition && inBetween > newElementPosition)
+                return (Math.abs(elementInGridPosition - inBetween) > 1);
+        if ((inBetween > elementInGridPosition && inBetween < newElementPosition))
+            return Math.abs(newElementPosition - inBetween) > 1;
         return false;
     }
 
-    private boolean canRetrieveFromInBetween(int cityInGrid, int city, int inBetween) {
-        if (Math.abs(cityInGrid - city) > 1)
-            if (inBetween < cityInGrid && inBetween > city)
-                return (Math.abs(city - inBetween) > 1);
-        if ((inBetween > cityInGrid && inBetween < city))
-            return Math.abs(cityInGrid - inBetween) > 1;
+    private boolean canRetrieveFromInBetween(int elementInGridPosition, int newElementPosition, int inBetween) {
+        if (Math.abs(elementInGridPosition - newElementPosition) > 1)
+            if (inBetween < elementInGridPosition && inBetween > newElementPosition)
+                return (Math.abs(newElementPosition - inBetween) > 1);
+        if ((inBetween > elementInGridPosition && inBetween < newElementPosition))
+            return Math.abs(elementInGridPosition - inBetween) > 1;
         return false;
     }
 
-    private void performHorizontalCut(City city) {
+    private boolean performHorizontalCut(T newElement) {
 
-        GridAddressIndexes cityGridAddressIndexes = getCityGridAddressIndexes(city);
-        City cityInGrid = grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y];
-        int inBetween = Math.round((cityInGrid.getLocation().getY() + city.getLocation().getY()) / 2.0f);
+        GridAddressIndexes elementGridAddressIndexes = getElementGridAddressIndexes(newElement);
+        T elementInGrid = grid_address[elementGridAddressIndexes.x][elementGridAddressIndexes.y];
+        int inBetween = Math.round((elementInGrid.getLocation().getY() + newElement.getLocation().getY()) / 2.0f);
 
         boolean didChangeInBetween = false;
 
         do {
             didChangeInBetween = false;
             // Check if inBetween intersects with any existing city
-            for (City existingCity : graph.getVertices().values()) {
-                if (existingCity != null && existingCity.getLocation().getY() == inBetween) {
+            for (T element : elements) {
+                if (element != null && element.getLocation().getY() == inBetween) {
 
                     //  v případě že řez prochází nějakým městem, tak se pokusit posunout řez, jinak výjmka, jelilkož řez nejde provézt
-                    if (canAddToInBetween(cityInGrid.getLocation().getY(), city.getLocation().getY(), inBetween)) {
+                    if (canAddToInBetween(elementInGrid.getLocation().getY(), newElement.getLocation().getY(), inBetween)) {
                         inBetween++;
                         didChangeInBetween = true;
                         break;
-                    } else if (canRetrieveFromInBetween(cityInGrid.getLocation().getY(), city.getLocation().getY(), inBetween)) {
+                    } else if (canRetrieveFromInBetween(elementInGrid.getLocation().getY(), newElement.getLocation().getY(), inBetween)) {
                         inBetween--;
                         didChangeInBetween = true;
                         break;
                     } else {
-                        throw new IllegalArgumentException("Cut cannot intersect with an existing city at Y: " + inBetween);
+                        return false;
+//                        throw new IllegalArgumentException("Cut cannot intersect with an existing city at Y: " + inBetween);
                     }
 
                 }
             }
         } while (didChangeInBetween);
 
-        System.out.println("Performing new vertical cut at y: " + inBetween + " between " + cityInGrid.getName() + " y: " + cityInGrid.getLocation().getY() + " and " + city.getName() + " y: " + city.getLocation().getY());
+//        System.out.println("Performing new vertical cut at y: " + inBetween + " between " + elementInGrid.getName() + " y: " + elementInGrid.getLocation().getY() + " and " + newElement.getName() + " y: " + newElement.getLocation().getY());
 
         int[] newHorizontalCuts = new int[horizontal_cuts.length + 1];
         int indexForInBetween = -1;
@@ -293,42 +297,43 @@ public class GridIndex {
         horizontal_cuts = newHorizontalCuts;
 
         // vytvořím si nové pole s o jedna delšími sloupci
-        grid_address = new City[grid_address.length][grid_address[0].length + 1];
+        grid_address = (T[][]) Array.newInstance(Tclass, grid_address.length, grid_address[0].length + 1);
+        return true;
     }
 
-    private void performVerticalCut(City city) {
-        GridAddressIndexes cityGridAddressIndexes = getCityGridAddressIndexes(city);
-        City cityInGrid = grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y];
-        int inBetween = Math.round((cityInGrid.getLocation().getX() + city.getLocation().getX()) / 2.0f);
+    private boolean performVerticalCut(T newElement) {
+        GridAddressIndexes elementGridAddressIndexes = getElementGridAddressIndexes(newElement);
+        T elementInGrid = grid_address[elementGridAddressIndexes.x][elementGridAddressIndexes.y];
+        int inBetween = Math.round((elementInGrid.getLocation().getX() + newElement.getLocation().getX()) / 2.0f);
 
         boolean didChangeInBetween = false;
         do {
             didChangeInBetween = false;
             // Check if inBetween intersects with any existing city
-            for (City existingCity : graph.getVertices().values()) {
-//                City existingCity = grid_address[i][cityGridAddressIndexes.y];
-                if (existingCity != null && existingCity.getLocation().getX() == inBetween) {
+            for (T existingElement : elements) {
+                if (existingElement != null && existingElement.getLocation().getX() == inBetween) {
 
                     //  v případě že řez prochází nějakým městem, tak se pokusit posunout řez, jinak výjmka, jelilkož řez nejde provézt
-                    if (canAddToInBetween(cityInGrid.getLocation().getX(), city.getLocation().getX(), inBetween)) {
+                    if (canAddToInBetween(elementInGrid.getLocation().getX(), newElement.getLocation().getX(), inBetween)) {
                         inBetween++;
                         didChangeInBetween = true;
                         break;
-                    } else if (canRetrieveFromInBetween(cityInGrid.getLocation().getX(), city.getLocation().getX(), inBetween)) {
+                    } else if (canRetrieveFromInBetween(elementInGrid.getLocation().getX(), newElement.getLocation().getX(), inBetween)) {
                         inBetween--;
                         didChangeInBetween = true;
                         break;
                     } else {
-                        throw new IllegalArgumentException("Cut cannot intersect with an existing city at X: " + inBetween);
+                        return false;
+//                        throw new IllegalArgumentException("Cut cannot intersect with an existing city at X: " + inBetween);
                     }
                 }
             }
         } while (didChangeInBetween);
 
 
-        System.out.println("Performing new vertical cut at x: " + inBetween + " between " + cityInGrid.getName() + " x: " + cityInGrid.getLocation().getX() + " and " + city.getName() + " x: " + city.getLocation().getX());
+//        System.out.println("Performing new vertical cut at x: " + inBetween + " between " + elementInGrid.getName() + " x: " + elementInGrid.getLocation().getX() + " and " + newElement.getName() + " x: " + newElement.getLocation().getX());
 
-        int[] newWidthCuts = new int[vertical_cuts.length + 1];
+        int[] newVerticalCuts = new int[vertical_cuts.length + 1];
         int indexForInBetween = -1;
         for (int i = 1; i < vertical_cuts.length; i++) {
             if (vertical_cuts[i - 1] < inBetween && vertical_cuts[i] > inBetween) {
@@ -336,12 +341,13 @@ public class GridIndex {
                 break;
             }
         }
-        System.arraycopy(vertical_cuts, 0, newWidthCuts, 0, indexForInBetween);
-        newWidthCuts[indexForInBetween] = inBetween;
-        System.arraycopy(vertical_cuts, indexForInBetween, newWidthCuts, indexForInBetween + 1, horizontal_cuts.length - indexForInBetween);
-        vertical_cuts = newWidthCuts;
+        System.arraycopy(vertical_cuts, 0, newVerticalCuts, 0, indexForInBetween);
+        newVerticalCuts[indexForInBetween] = inBetween;
+        System.arraycopy(vertical_cuts, indexForInBetween, newVerticalCuts, indexForInBetween + 1, vertical_cuts.length - indexForInBetween);
+        vertical_cuts = newVerticalCuts;
 
-        grid_address = new City[grid_address.length + 1][grid_address[0].length];
+        grid_address = (T[][]) Array.newInstance(Tclass, grid_address.length + 1, grid_address[0].length);
+        return true;
     }
 
     private void mapAllCitiesToGridAddress() {
@@ -351,18 +357,18 @@ public class GridIndex {
                 grid_address[i][j] = null;
             }
         }
-        for (String key : graph.getVertices().keySet()) {
-            City city = graph.getVertex(key);
-            addCityToGridAddress(city);
+        // pro každé město v grafu, vložit na správné místo v grid_address
+        for (T element : elements) {
+            addElementToGridAddress(element);
         }
     }
 
-    private void addCityToGridAddress(City city) {
-        GridAddressIndexes cityGridAddressIndexes = getCityGridAddressIndexes(city);
-        if (grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y] != null) {
+    private void addElementToGridAddress(T element) {
+        GridAddressIndexes elementGridAddressIndexes = getElementGridAddressIndexes(element);
+        if (grid_address[elementGridAddressIndexes.x][elementGridAddressIndexes.y] != null) {
             throw new IllegalArgumentException("Index is already in use!");
         }
-        grid_address[cityGridAddressIndexes.x][cityGridAddressIndexes.y] = city;
+        grid_address[elementGridAddressIndexes.x][elementGridAddressIndexes.y] = element;
     }
 
 }

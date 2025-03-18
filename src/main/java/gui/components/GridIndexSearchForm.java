@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 public class GridIndexSearchForm extends JPanel{
 
-    private final GridIndex gridIndex;
+    private final GridIndex<City> gridIndex;
     private final GraphPanel graphPanel;
     JTextField rectangleSearchX1;
     JTextField rectangleSearchY1;
@@ -20,7 +20,7 @@ public class GridIndexSearchForm extends JPanel{
     JTextField pointSearchY;
 
 
-    public GridIndexSearchForm(GridIndex gridIndex, GraphPanel graphPanel) {
+    public GridIndexSearchForm(GridIndex<City> gridIndex, GraphPanel graphPanel) {
         this.gridIndex = gridIndex;
         this.graphPanel = graphPanel;
         initComponent();
@@ -72,7 +72,7 @@ public class GridIndexSearchForm extends JPanel{
             return;
         }
 
-        ArrayList<City> cities = gridIndex.findCityBySegment(x1, y1, x2, y2);
+        ArrayList<City> cities = gridIndex.findElementBySegment(x1, y1, x2, y2);
 
         graphPanel.setCitiesSearchedInGraphIndex(cities);
         graphPanel.setSearchDimensions(x1, y1, x2, y2);
@@ -87,7 +87,7 @@ public class GridIndexSearchForm extends JPanel{
             JOptionPane.showMessageDialog(null, "Neplatne souradnice");
         }
 
-        City city = gridIndex.findCityByCoordinates(x,y);
+        City city = gridIndex.findElementsByCoordinates(x,y);
         graphPanel.setFoundCityByCoordinates(city);
         graphPanel.repaint();
 

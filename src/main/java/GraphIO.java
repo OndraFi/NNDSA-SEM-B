@@ -4,15 +4,16 @@ import main.java.graph.EdgeData;
 import main.java.graph.Graph;
 import main.java.grid.GridIndex;
 
-import javax.swing.*;
 import java.io.*;
 
 public class GraphIO {
 
-    private GridIndex gridIndex;
+    private final GridIndex<City> gridIndex;
+    private final Graph<String, City, Road> graph;
 
-    public GraphIO(GridIndex gridIndex) {
+    public GraphIO(GridIndex<City> gridIndex, Graph<String,City,Road> graph) {
         this.gridIndex = gridIndex;
+        this.graph = graph;
     }
 
     public void importFromCSV(String fileName) throws IOException {
@@ -26,19 +27,20 @@ public class GraphIO {
                     int x = Integer.parseInt(parts[3]);
                     int y = Integer.parseInt(parts[4]);
                     City city = new City(cityName, x, y);
-                    gridIndex.addCity(key, city);
+                    gridIndex.add(city);
+                    graph.addVertex(key, city);
                 } else if (parts[0].equals("e")) {
                     String from = parts[1];
                     String to = parts[2];
                     int weight = Integer.parseInt(parts[3]);
-                    gridIndex.addRoad(from, to, new Road(weight));
+                    graph.addEdge(from, to, new Road(weight));
                 }
             }
     }
 
     public void saveToCSV(String fileName) throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
-        Graph<String, City, Road> graph = gridIndex.getGraph();
+
         try {
             for (String key : graph.getVertices().keySet()) {
                 City city = graph.getVertex(key);

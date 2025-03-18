@@ -1,12 +1,14 @@
 package main.java;
 
-public class City{
+import main.java.grid.LocationInterface;
+
+public class City implements LocationInterface {
 
     private final String name;
     private final Location location;
 
-    public City(String name, int x ,int y) {
-        this.location = new Location(x,y);
+    public City(String name, int x, int y) {
+        this.location = new Location(x, y);
         this.name = name;
     }
 
@@ -18,4 +20,8 @@ public class City{
         return this.name;
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
 }

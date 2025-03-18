@@ -14,15 +14,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class GraphIOForm extends JPanel {
-    private final GridIndex gridIndex;
+    private final GridIndex<City> gridIndex;
+    private final Graph<String,City,Road> graph;
     private final GraphIO graphIO;
     private final JButton loadButton;
     private final JButton saveButton;
     private final java.util.List<Runnable> loadListeners = new ArrayList<>();
 
-    public GraphIOForm(GridIndex gridIndex) {
+    public GraphIOForm(GridIndex<City> gridIndex, Graph<String,City,Road> graph) {
         this.gridIndex = gridIndex;
-        this.graphIO = new GraphIO(this.gridIndex);
+        this.graph = graph;
+        this.graphIO = new GraphIO(this.gridIndex, graph);
         setLayout(new GridLayout(0, 2));
         loadButton = new JButton("Load Graph");
         saveButton = new JButton("Save Graph");

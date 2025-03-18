@@ -19,7 +19,7 @@ import java.util.Map;
 
 public class GraphPanel extends JPanel {
     private final Graph<String, City, Road> graph;
-    private final GridIndex gridIndex;
+    private final GridIndex<City> gridIndex;
     private double scaleX, scaleY;
     private final double zoomFactor = 1.0;
     private Point dragStartScreen;
@@ -31,8 +31,8 @@ public class GraphPanel extends JPanel {
     private int searchRectangleX1, searchRectangleY1, searchRectangleX2, searchRectangleY2; // dimenze vyhledávaného obdélníku
     private City foundCityByCoordinates; // najité město pomocí bodu
 
-    public GraphPanel( GridIndex gridIndex, Dimension size) {
-        this.graph = gridIndex.getGraph();
+    public GraphPanel( GridIndex<City> gridIndex, Graph<String,City,Road> graph, Dimension size) {
+        this.graph = graph;
         this.gridIndex = gridIndex;
         this.setPreferredSize(size);
         calculateScaleFactors();
@@ -151,7 +151,7 @@ public class GraphPanel extends JPanel {
         g2.setTransform(transform);
 
         // Set font size based on zoomFactor
-        int fontSize = (int) Math.max(10, 5 * zoomFactor);  // Base size is 10, adjusted with zoom
+        int fontSize = (int) Math.max(7, 5 * zoomFactor);  // Base size is 10, adjusted with zoom
         g2.setFont(new Font("Arial", Font.PLAIN, fontSize));
 
         //Draw grid

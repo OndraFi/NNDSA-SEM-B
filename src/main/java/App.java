@@ -15,13 +15,11 @@ import java.util.UUID;
 
 public class App {
     Graph<String, City, Road> graph;
-    GridIndex gridIndex;
+    GridIndex<City> gridIndex;
 
     public App() {
-        this.gridIndex = new GridIndex(50, 70);
-        this.graph = gridIndex.getGraph();
-//        generateGraph(graph);
-//        generateAssigmentGraph();
+        this.gridIndex = new GridIndex<>(50, 70, City.class);
+        this.graph = new Graph<>();
     }
 
     public static String generateKey() {
@@ -29,7 +27,7 @@ public class App {
     }
 
     public void openWindow() {
-        Gui gui = new Gui(gridIndex);
+        Gui gui = new Gui(gridIndex,graph);
     }
 
     private void generateAssigmentGraph(){

@@ -4,7 +4,6 @@ import main.java.City;
 import main.java.Road;
 import main.java.graph.EdgeData;
 import main.java.graph.Graph;
-import main.java.grid.GridIndex;
 import main.java.gui.ComboBoxItem;
 
 import javax.swing.*;
@@ -18,12 +17,10 @@ public class RoadForm extends JPanel {
     private JTextField weightField;
     private JButton addEdgeButton, removeEdgeButton, blockEdgeButton, unblockEdgeButton;
     private final Graph<String, City, Road> graph;
-    private final GridIndex gridIndex;
     private List<Runnable> roadListeners = new ArrayList<>();
 
-    public RoadForm(GridIndex gridIndex) {
-        this.graph = gridIndex.getGraph();
-        this.gridIndex = gridIndex;
+    public RoadForm( Graph<String,City,Road> graph) {
+        this.graph = graph;
         initializeComponents();
         mapVerticesToComboBoxes();
     }
@@ -155,7 +152,7 @@ public class RoadForm extends JPanel {
         try {
             int weight = Integer.parseInt(weightStr);
             if (!vertex1Key.equals(vertex2Key)) {
-                this.gridIndex.addRoad(vertex1Key, vertex2Key, new Road(weight));
+                this.graph.addEdge(vertex1Key, vertex2Key, new Road(weight));
                 JOptionPane.showMessageDialog(this, "Edge added successfully!");
             } else {
                 JOptionPane.showMessageDialog(this, "Cannot add edge between the same vertex.", "Error", JOptionPane.ERROR_MESSAGE);
